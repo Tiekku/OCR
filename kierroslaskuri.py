@@ -118,22 +118,22 @@ class AppWindow(tk.Tk):
 
     def create_font_buttons(self):
         button_frame = ttk.Frame(self)
-        button_frame.grid(row=0, column=1, sticky="nsew")
+        button_frame.pack(side=tk.RIGHT, fill=tk.Y)
 
         filter_label = ttk.Label(button_frame, text="Filter CN:")
-        filter_label.grid(row=0, column=0, sticky=tk.E, padx=5, pady=5)
+        filter_label.pack(padx=5, pady=5)
 
         self.filter_entry = tk.Entry(button_frame)
-        self.filter_entry.grid(row=1, column=0, padx=5, pady=5)
+        self.filter_entry.pack(padx=5, pady=5)
 
         filter_button = ttk.Button(button_frame, text="Apply Filter", command=self.apply_filter)
-        filter_button.grid(row=2, column=0, padx=5, pady=5)
+        filter_button.pack(padx=5, pady=5)
 
         plus_button = ttk.Button(button_frame, text="+", command=self.increase_font_size)
-        plus_button.grid(row=3, column=0, padx=5, pady=5)
+        plus_button.pack(padx=5, pady=5)
 
         minus_button = ttk.Button(button_frame, text="-", command=self.decrease_font_size)
-        minus_button.grid(row=4, column=0, padx=5, pady=5)
+        minus_button.pack(padx=5, pady=5)
 
     def increase_font_size(self):
         current_font = tkfont.Font(font=self.content_text['font'])
