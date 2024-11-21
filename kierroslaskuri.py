@@ -5,6 +5,7 @@ from tkinter import ttk
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import tkinter.font as tkfont
+from datetime import datetime
 
 # class for handling file system events
 class MyHandler(FileSystemEventHandler):
@@ -19,12 +20,23 @@ class MyHandler(FileSystemEventHandler):
         with open(filepath, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for line in lines:
-                card_id, card_name = line.strip().split(';')
-                self.card_names[card_id] = card_name
+                print(f"Read line: {line.strip()}")
+                if line.startswith("CardID:"):
+                    parts = line.split(", Name:")
+                    if len(parts) == 2:
+                        card_id = parts[0].replace("CardID:", "").strip()
+                        card_name = parts[1].strip()
+                        self.card_names[card_id] = card_name
+                        print(f"Added card: {card_id} - {card_name}")
+                    else:
+                        print(f"Skipping invalid line in cardName.txt: {line}")
+        self.update_content_text()
 
     def on_modified(self, event):
         if not event.is_directory:
             filepath = event.src_path
+            modified_time = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
+            print(f"File modified: {filepath} at {modified_time}")
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
                     'content': '',
@@ -59,6 +71,7 @@ class MyHandler(FileSystemEventHandler):
                         counter_text = f"Stage {stage_counter} - Lap {lap_counter}"
 
                         self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} | {counter_text} | Time: {punch_time}"
+                        print(f"Updated card content: {self.card_content[card_id]}")
 
             for card_id in list(latest_values.keys()):
                 if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
@@ -84,39 +97,6 @@ class AppWindow(tk.Tk):
         self.observer = Observer()
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-    def destroy(self):
-        self.stop_observer()
-        super().destroy()
-        
-    # Center the text in the content_text widget
-    def center_text(self):
-        tag = "center"
-        self.content_text.tag_configure(tag, justify="center")
-        start_line = 1.0
-        end_line = float(self.content_text.index(tk.END).split(".")[0]) + 1.0
-        self.content_text.tag_add(tag, start_line, end_line)
-
-    def start_observer(self):
-        directory = filedialog.askdirectory()
-        if directory:
-            filename = "cardName.txt"
-            filepath = os.path.join(directory, filename)
-            if not os.path.exists(filepath):
-                return
-            self.observer.schedule(self.handler, directory, recursive=True)
-            self.observer.start()
-            self.handler.load_card_names(filepath)
-
-    def stop_observer(self):
-        if self.observer.is_alive():
-            self.observer.stop()
-            self.observer.join()
-
-    def update_content_text(self, content):
-        self.content_text.delete(1.0, tk.END)
-        for line in content:
-            self.content_text.insert(tk.END, line + '\n')
 
     def create_font_buttons(self):
         button_frame = ttk.Frame(self)
@@ -155,6 +135,12 @@ class AppWindow(tk.Tk):
         default_font.configure(size=20, weight="bold")
         self.content_text.configure(font=default_font.actual())
 
+    def update_content_text(self, content):
+        self.content_text.delete(1.0, tk.END)
+        for line in content:
+            self.content_text.insert(tk.END, line + '\n')
+        print("Updated content text in the window.")
+
     def apply_filter(self):
         # Get the filter input from the entry box
         filter_input = self.filter_entry.get()
@@ -167,6 +153,22 @@ class AppWindow(tk.Tk):
         
         # Update the content text with the filtered content
         self.update_content_text(filtered_content)
+
+    def start_observer(self):
+        directory = filedialog.askdirectory()
+        if directory:
+            filename = "cardName.txt"
+            filepath = os.path.join(directory, filename)
+            if not os.path.exists(filepath):
+                return
+            self.observer.schedule(self.handler, directory, recursive=True)
+            self.observer.start()
+            self.handler.load_card_names(filepath)
+
+    def stop_observer(self):
+        if self.observer.is_alive():
+            self.observer.stop()
+            self.observer.join()
 
     def on_closing(self):
         self.stop_observer()
