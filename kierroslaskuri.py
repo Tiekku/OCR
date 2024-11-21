@@ -27,11 +27,11 @@ class MyHandler(FileSystemEventHandler):
                         card_id = parts[0].replace("CardID:", "").strip()
                         card_name = parts[1].strip()
                         self.card_names[card_id] = card_name
-                        self.card_content[card_id] = f"{card_name} | Stage 0 - Lap 0 | Time: N/A"
+                        self.card_content[card_id] = f"{card_name} - 0 - 0"
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
-        self.app.update_content_text(self.card_content.values())
+        self.app.update_content_text(self.card_content)
 
     def on_modified(self, event):
         if not event.is_directory:
@@ -69,18 +69,18 @@ class MyHandler(FileSystemEventHandler):
 
                         lap_counter = (new_latest_values[card_id] - 1) % 3 + 1
                         stage_counter = (new_latest_values[card_id] - 1) // 3 + 1
-                        counter_text = f"Stage {stage_counter} - Lap {lap_counter}"
+                        counter_text = f"{stage_counter} - {lap_counter}"
 
-                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} | {counter_text} | Time: {punch_time}"
-                        print(f"Updated card content: {self.card_content[card_id]}")
+                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} - {counter_text}"
+                        print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             for card_id in list(latest_values.keys()):
-                if card_id not in [line.split(';')[1].strip() if len(line.split(';')) >= 8 else "" for line in lines]:
+                if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
                     del latest_values[card_id]
 
             latest_values.update(new_latest_values)
 
-            self.app.update_content_text(self.card_content.values())
+            self.app.update_content_text(self.card_content)
 
 class AppWindow(tk.Tk):
     def __init__(self):
@@ -136,10 +136,14 @@ class AppWindow(tk.Tk):
         default_font.configure(size=20, weight="bold")
         self.content_text.configure(font=default_font.actual())
 
-    def update_content_text(self, content):
+    def update_content_text(self, card_content):
         self.content_text.delete(1.0, tk.END)
-        for line in content:
-            self.content_text.insert(tk.END, line + '\n')
+        for card_id, content in card_content.items():
+            if "Lap 3" in content:
+                self.content_text.insert(tk.END, content + '\n', 'red')
+            else:
+                self.content_text.insert(tk.END, content + '\n')
+        self.content_text.tag_config('red', foreground='red')
         print("Updated content text in the window.")
 
     def apply_filter(self):
@@ -150,7 +154,7 @@ class AppWindow(tk.Tk):
         filter_codes = filter_input.split(',')
         
         # Filter the card content based on the input codes
-        filtered_content = [line for line in self.handler.card_content.values() if any(code in line for code in filter_codes)]
+        filtered_content = {card_id: line for card_id, line in self.handler.card_content.items() if any(code in line for code in filter_codes)}
         
         # Update the content text with the filtered content
         self.update_content_text(filtered_content)
