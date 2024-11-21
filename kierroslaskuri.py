@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.events import FileSystemEventHandler
 import tkinter.font as tkfont
 
 # class for handling file system events
@@ -23,7 +23,7 @@ class MyHandler(FileSystemEventHandler):
                 self.card_names[card_id] = card_name
 
     def on_modified(self, event):
-        if isinstance(event, FileSystemEvent):
+        if not event.is_directory:
             filepath = event.src_path
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
@@ -155,24 +155,13 @@ class AppWindow(tk.Tk):
         filter_input = self.filter_entry.get()
         
         # Split the input into individual codes
-        filter_codes = [code.strip() for code in filter_input.split(',')]
-
-        # Filter the lines based on the codes
-        filtered_lines = []
-        for line in self.content_text.get("1.0", tk.END).splitlines():
-            values = line.split('|')
-            if len(values) >= 2:
-                card_id = values[0].strip()
-                if card_id in filter_codes:
-                    filtered_lines.append(line)
-
-        # Clear the current content
-        self.content_text.delete("1.0", tk.END)
-
-        # Insert the filtered lines
-        for line in filtered_lines:
-            self.content_text.insert(tk.END, line + '\n')
-
+        filter_codes = filter_input.split(',')
+        
+        # Filter the card content based on the input codes
+        filtered_content = [line for line in self.handler.card_content.values() if any(code in line for code in filter_codes)]
+        
+        # Update the content text with the filtered content
+        self.update_content_text(filtered_content)
 
 app = AppWindow()
 app.mainloop()
