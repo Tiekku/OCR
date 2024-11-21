@@ -16,24 +16,12 @@ class MyHandler(FileSystemEventHandler):
 
     # Load card names from a file
     def load_card_names(self, filepath):
-        self.card_names = {}
-
-        #read the file and store the card names
-        with open(filepath, 'r', encoding='latin-1') as file:
+        with open(filepath, 'r', encoding='utf-8') as file:
             lines = file.readlines()
+            for line in lines:
+                card_id, card_name = line.strip().split(';')
+                self.card_names[card_id] = card_name
 
-        #parse the lines and store the card names
-        for line in lines:
-            line = line.strip()
-            if line:
-                parts = line.split(", Name: ")
-                if len(parts) == 2:
-                    card_id = parts[0].split("CardID: ")[1].strip()
-                    name = parts[1].strip()
-                    self.card_names[card_id] = name
-                    self.card_content[card_id] = ""
-    
-    # Handle the file modified event
     def on_modified(self, event):
         if isinstance(event, FileSystemEvent):
             filepath = event.src_path
@@ -42,14 +30,11 @@ class MyHandler(FileSystemEventHandler):
                     'content': '',
                     'latest_values': {}
                 }
-            # Read the file content
             with open(filepath, 'r', encoding='utf-8') as file:
                 content = file.read()
                 self.file_data[filepath]['content'] = content
-            #update the counters
             self.update_counters(filepath)
 
-    # Update the counters based on the file content
     def update_counters(self, filepath):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
@@ -59,7 +44,7 @@ class MyHandler(FileSystemEventHandler):
 
             for line in lines:
                 values = line.split(';')
-                if len(values) >= 8:  # Check if line has enough values
+                if len(values) >= 8:
                     code_number = values[2].strip()
                     card_id = values[1].strip()
                     punch_time = values[7].strip()
@@ -73,26 +58,19 @@ class MyHandler(FileSystemEventHandler):
                         stage_counter = new_latest_values[card_id] // 3
                         counter_text = f"Stage {stage_counter} - Lap {lap_counter}"
 
-                        # Update card content with current situation
                         self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} | {counter_text} | Time: {punch_time}"
 
-            # Remove old card IDs from latest_values
             for card_id in list(latest_values.keys()):
                 if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
                     del latest_values[card_id]
 
-            # Update latest_values with new_latest_values
             latest_values.update(new_latest_values)
 
-            # Update the display with the current content of each card
             self.app.update_content_text(self.card_content.values())
 
-
-# Main application window
 class AppWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-
         self.title("Kierroslaskuri")
         self.geometry("800x600")
 
@@ -117,85 +95,61 @@ class AppWindow(tk.Tk):
         end_line = float(self.content_text.index(tk.END).split(".")[0]) + 1.0
         self.content_text.tag_add(tag, start_line, end_line)
 
-    # Start the observer to monitor the directory
     def start_observer(self):
         directory = filedialog.askdirectory()
         if directory:
             filename = "cardName.txt"
             filepath = os.path.join(directory, filename)
-        if not directory:
-            return
-            self.observer.schedule(self.event_handler, directory, recursive=True)
+            if not os.path.exists(filepath):
+                return
+            self.observer.schedule(self.handler, directory, recursive=True)
             self.observer.start()
-            self.event_handler.load_card_names(filepath)
+            self.handler.load_card_names(filepath)
 
-    # Stop the observer
     def stop_observer(self):
         if hasattr(self, 'observer'):
             self.observer.stop()
             self.observer.join()
 
-    # Update the content_text widget with the card content
-    def update_content_text(self, card_content):
-        # Clear the current content
-        self.content_text.delete("1.0", tk.END)
+    def update_content_text(self, content):
+        self.content_text.delete(1.0, tk.END)
+        for line in content:
+            self.content_text.insert(tk.END, line + '\n')
 
-        # Append the content of each card
-        for content in card_content:
-            if content.strip():  # Skip empty lines
-                self.content_text.insert(tk.END, content + '\n')
-
-        # Apply formatting to the new content
-        self.configure_output_formatting()
-
-    # Configure the output formatting
-    def configure_output_formatting(self):
-        # Configure tags for formatting
-        self.content_text.tag_configure("name", lmargin1=10)
-        self.content_text.tag_configure("counter", lmargin1=100)
-
-        # Apply formatting to each line
-        for i in range(1, int(self.content_text.index(tk.END).split('.')[0])+1):
-            self.format_line(i)
-    
-    # Format a single line
-    def format_line(self, line_number):
-        line_start = f"{line_number}.0"
-        line_end = f"{line_number+1}.0"
-
-        # Apply formatting to the name column
-        self.content_text.tag_add("name", line_start, line_end)
-
-        # Apply formatting to the counter column
-        self.content_text.tag_add("counter", f"{line_number}.40", line_end)
-
-
-    # Create buttons for changing the font size
     def create_font_buttons(self):
         button_frame = ttk.Frame(self)
         button_frame.grid(row=0, column=1, sticky="nsew")
 
-        # Create a label for the filter input
         filter_label = ttk.Label(button_frame, text="Filter CN:")
         filter_label.grid(row=0, column=0, sticky=tk.E, padx=5, pady=5)
 
-        # Create a text input box for CN filtering
         self.filter_entry = tk.Entry(button_frame)
         self.filter_entry.grid(row=1, column=0, padx=5, pady=5)
 
-        # Create a button to apply the filter
         filter_button = ttk.Button(button_frame, text="Apply Filter", command=self.apply_filter)
         filter_button.grid(row=2, column=0, padx=5, pady=5)
 
-        # Create + button to increase font size
         plus_button = ttk.Button(button_frame, text="+", command=self.increase_font_size)
         plus_button.grid(row=3, column=0, padx=5, pady=5)
 
-        # Create - button to decrease font size
         minus_button = ttk.Button(button_frame, text="-", command=self.decrease_font_size)
         minus_button.grid(row=4, column=0, padx=5, pady=5)
 
-    #   Apply the filter to the content_text widget
+    def increase_font_size(self):
+        current_font = tkfont.Font(font=self.content_text['font'])
+        new_font_size = current_font.actual()['size'] + 1
+        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
+
+    def decrease_font_size(self):
+        current_font = tkfont.Font(font=self.content_text['font'])
+        new_font_size = max(8, current_font.actual()['size'] - 1)
+        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
+
+    def set_default_font(self):
+        default_font = tkfont.nametofont("TkDefaultFont")
+        default_font.configure(size=20, weight="bold")
+        self.content_text.configure(font=default_font.actual())
+
     def apply_filter(self):
         # Get the filter input from the entry box
         filter_input = self.filter_entry.get()
@@ -218,21 +172,6 @@ class AppWindow(tk.Tk):
         # Insert the filtered lines
         for line in filtered_lines:
             self.content_text.insert(tk.END, line + '\n')
-
-    def increase_font_size(self):
-        current_font = tkfont.Font(font=self.content_text['font'])
-        new_font_size = current_font.actual()['size'] + 1
-        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
-
-    def decrease_font_size(self):
-        current_font = tkfont.Font(font=self.content_text['font'])
-        new_font_size = max(8, current_font.actual()['size'] - 1)
-        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
-
-    def set_default_font(self):
-        default_font = tkfont.nametofont("TkDefaultFont")
-        default_font.configure(size=20, weight="bold")
-        self.content_text.configure(font=default_font.actual())
 
 
 app = AppWindow()
