@@ -74,7 +74,7 @@ class MyHandler(FileSystemEventHandler):
                         counter_text = f"Stage {stage_counter} - Lap {lap_counter}"
 
                         # Update card content with current situation
-                        self.card_content[card_id] = f"{self.card_names.get(card_id, {card_id})} | {counter_text} | Time: {punch_time}"
+                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} | {counter_text} | Time: {punch_time}"
 
             # Remove old card IDs from latest_values
             for card_id in list(latest_values.keys()):
@@ -94,8 +94,7 @@ class AppWindow(tk.Tk):
         super().__init__()
 
         self.title("Modified File Content")
-        self.protocol("WM_DELETE_WINDOW", self.stop_observer)
-        self.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
 
         self.content_frame = ttk.Frame(self)
         self.content_frame.grid(row=0, column=0, sticky="nsew")
@@ -123,10 +122,6 @@ class AppWindow(tk.Tk):
         self.center_text()
 
 
-    def close_window(self):
-        self.stop_observer()
-        super().destroy()
-
     def destroy(self):
         self.stop_observer()
         super().destroy()
@@ -145,11 +140,12 @@ class AppWindow(tk.Tk):
         if directory:
             filename = "cardName.txt"
             filepath = os.path.join(directory, filename)
-            self.observer = Observer()
+        if not directory:
+            return
             self.observer.schedule(self.event_handler, directory, recursive=True)
             self.observer.start()
-
             self.event_handler.load_card_names(filepath)
+
     # Stop the observer
     def stop_observer(self):
         if hasattr(self, 'observer'):
@@ -232,6 +228,13 @@ class AppWindow(tk.Tk):
                 card_id = values[0].strip()
                 if card_id in filter_codes:
                     filtered_lines.append(line)
+
+        # Clear the current content
+        self.content_text.delete("1.0", tk.END)
+
+        # Insert the filtered lines
+        for line in filtered_lines:
+            self.content_text.insert(tk.END, line + '\n')
 
     def increase_font_size(self):
         current_font = tkfont.Font(font=self.content_text['font'])
