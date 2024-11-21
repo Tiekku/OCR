@@ -27,6 +27,7 @@ class MyHandler(FileSystemEventHandler):
                         card_id = parts[0].replace("CardID:", "").strip()
                         card_name = parts[1].strip()
                         self.card_names[card_id] = card_name
+                        self.card_content[card_id] = f"{card_name} | Stage 0 - Lap 0 | Time: N/A"
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
