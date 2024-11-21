@@ -6,7 +6,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 import tkinter.font as tkfont
 
-
+# class for handling file system events
 class MyHandler(FileSystemEventHandler):
     def __init__(self, app):
         self.app = app
@@ -14,12 +14,15 @@ class MyHandler(FileSystemEventHandler):
         self.card_names = {}
         self.card_content = {}
 
+    # Load card names from a file
     def load_card_names(self, filepath):
         self.card_names = {}
 
+        #read the file and store the card names
         with open(filepath, 'r', encoding='latin-1') as file:
             lines = file.readlines()
 
+        #parse the lines and store the card names
         for line in lines:
             line = line.strip()
             if line:
@@ -29,7 +32,8 @@ class MyHandler(FileSystemEventHandler):
                     name = parts[1].strip()
                     self.card_names[card_id] = name
                     self.card_content[card_id] = ""
-
+    
+    # Handle the file modified event
     def on_modified(self, event):
         if isinstance(event, FileSystemEvent):
             filepath = event.src_path
@@ -38,13 +42,14 @@ class MyHandler(FileSystemEventHandler):
                     'content': '',
                     'latest_values': {}
                 }
-
-            with open(filepath, 'r') as file:
+            # Read the file content
+            with open(filepath, 'r', encoding='utf-8') as file:
                 content = file.read()
                 self.file_data[filepath]['content'] = content
-
+            #update the counters
             self.update_counters(filepath)
 
+    # Update the counters based on the file content
     def update_counters(self, filepath):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
@@ -83,7 +88,7 @@ class MyHandler(FileSystemEventHandler):
             self.app.update_content_text(self.card_content.values())
 
 
-
+# Main application window
 class AppWindow(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -126,7 +131,7 @@ class AppWindow(tk.Tk):
         self.stop_observer()
         super().destroy()
         
-
+    # Center the text in the content_text widget
     def center_text(self):
         tag = "center"
         self.content_text.tag_configure(tag, justify="center")
@@ -134,6 +139,7 @@ class AppWindow(tk.Tk):
         end_line = float(self.content_text.index(tk.END).split(".")[0]) + 1.0
         self.content_text.tag_add(tag, start_line, end_line)
 
+    # Start the observer to monitor the directory
     def start_observer(self):
         directory = filedialog.askdirectory()
         if directory:
@@ -144,13 +150,13 @@ class AppWindow(tk.Tk):
             self.observer.start()
 
             self.event_handler.load_card_names(filepath)
-
+    # Stop the observer
     def stop_observer(self):
         if hasattr(self, 'observer'):
             self.observer.stop()
             self.observer.join()
 
-
+    # Update the content_text widget with the card content
     def update_content_text(self, card_content):
         # Clear the current content
         self.content_text.delete("1.0", tk.END)
@@ -160,9 +166,10 @@ class AppWindow(tk.Tk):
             if content.strip():  # Skip empty lines
                 self.content_text.insert(tk.END, content + '\n')
 
-        # Configure output formatting
+        # Apply formatting to the new content
         self.configure_output_formatting()
 
+    # Configure the output formatting
     def configure_output_formatting(self):
         # Configure tags for formatting
         self.content_text.tag_configure("name", lmargin1=10)
@@ -171,7 +178,8 @@ class AppWindow(tk.Tk):
         # Apply formatting to each line
         for i in range(1, int(self.content_text.index(tk.END).split('.')[0])+1):
             self.format_line(i)
-
+    
+    # Format a single line
     def format_line(self, line_number):
         line_start = f"{line_number}.0"
         line_end = f"{line_number+1}.0"
@@ -183,7 +191,7 @@ class AppWindow(tk.Tk):
         self.content_text.tag_add("counter", f"{line_number}.40", line_end)
 
 
-
+    # Create buttons for changing the font size
     def create_font_buttons(self):
         button_frame = ttk.Frame(self)
         button_frame.grid(row=0, column=1, sticky="nsew")
@@ -208,6 +216,7 @@ class AppWindow(tk.Tk):
         minus_button = ttk.Button(button_frame, text="-", command=self.decrease_font_size)
         minus_button.grid(row=4, column=0, padx=5, pady=5)
 
+    #   Apply the filter to the content_text widget
     def apply_filter(self):
         # Get the filter input from the entry box
         filter_input = self.filter_entry.get()
