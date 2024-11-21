@@ -83,6 +83,8 @@ class AppWindow(tk.Tk):
         self.handler = MyHandler(self)
         self.observer = Observer()
 
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
     def destroy(self):
         self.stop_observer()
         super().destroy()
@@ -107,7 +109,7 @@ class AppWindow(tk.Tk):
             self.handler.load_card_names(filepath)
 
     def stop_observer(self):
-        if hasattr(self, 'observer'):
+        if self.observer.is_alive():
             self.observer.stop()
             self.observer.join()
 
@@ -162,6 +164,10 @@ class AppWindow(tk.Tk):
         
         # Update the content text with the filtered content
         self.update_content_text(filtered_content)
+
+    def on_closing(self):
+        self.stop_observer()
+        self.destroy()
 
 app = AppWindow()
 app.mainloop()
