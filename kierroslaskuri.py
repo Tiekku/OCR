@@ -137,6 +137,9 @@ class AppWindow(tk.Tk):
         minus_button = ttk.Button(button_frame, text="-", command=self.decrease_font_size)
         minus_button.grid(row=1, column=1, padx=5, pady=5)
 
+        folder_button = ttk.Button(button_frame, text="Select Folder", command=self.start_observer)
+        folder_button.grid(row=1, column=2, padx=5, pady=5)
+
     def increase_font_size(self):
         current_font = tkfont.Font(font=self.content_text['font'])
         new_font_size = current_font.actual()['size'] + 1
