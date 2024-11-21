@@ -93,34 +93,17 @@ class AppWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("Modified File Content")
-        self.protocol("WM_DELETE_WINDOW", self.destroy)
+        self.title("Kierroslaskuri")
+        self.geometry("800x600")
 
-        self.content_frame = ttk.Frame(self)
-        self.content_frame.grid(row=0, column=0, sticky="nsew")
-
-        self.content_text = tk.Text(self.content_frame, wrap="word")
-        self.content_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Bind the '+' key event to the increase_font_size method
-        self.bind("<plus>", lambda event: self.increase_font_size())
-        self.bind("<KP_Add>", lambda event: self.increase_font_size())
-
-        # Bind the '-' key event to the decrease_font_size method
-        self.bind("<minus>", lambda event: self.decrease_font_size())
-        self.bind("<KP_Subtract>", lambda event: self.decrease_font_size())
-
-        scrollbar = ttk.Scrollbar(self.content_frame, command=self.content_text.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.content_text.config(yscrollcommand=scrollbar.set)
-
-        self.event_handler = MyHandler(self)
-
-        self.start_observer()
-        self.create_font_buttons()
+        self.content_text = tk.Text(self)
+        self.content_text.pack(expand=True, fill=tk.BOTH)
         self.set_default_font()
-        self.center_text()
 
+        self.create_font_buttons()
+
+        self.handler = MyHandler(self)
+        self.observer = Observer()
 
     def destroy(self):
         self.stop_observer()
