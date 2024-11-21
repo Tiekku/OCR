@@ -140,9 +140,9 @@ class AppWindow(tk.Tk):
         self.content_text.delete(1.0, tk.END)
         for card_id, content in card_content.items():
             if "Lap 3" in content:
-                self.content_text.insert(tk.END, content + '\n', 'red')
+                self.content_text.insert(tk.END, f"{content}\n", 'red')
             else:
-                self.content_text.insert(tk.END, content + '\n')
+                self.content_text.insert(tk.END, f"{content}\n")
         self.content_text.tag_config('red', foreground='red')
         print("Updated content text in the window.")
 
