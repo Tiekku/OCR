@@ -67,15 +67,15 @@ class MyHandler(FileSystemEventHandler):
                         else:
                             new_latest_values[card_id] = 1
 
-                        lap_counter = new_latest_values[card_id] % 3
-                        stage_counter = new_latest_values[card_id] // 3
+                        lap_counter = (new_latest_values[card_id] - 1) % 3 + 1
+                        stage_counter = (new_latest_values[card_id] - 1) // 3 + 1
                         counter_text = f"Stage {stage_counter} - Lap {lap_counter}"
 
                         self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} | {counter_text} | Time: {punch_time}"
                         print(f"Updated card content: {self.card_content[card_id]}")
 
             for card_id in list(latest_values.keys()):
-                if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
+                if card_id not in [line.split(';')[1].strip() if len(line.split(';')) >= 8 else "" for line in lines]:
                     del latest_values[card_id]
 
             latest_values.update(new_latest_values)
