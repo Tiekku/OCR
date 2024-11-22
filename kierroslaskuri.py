@@ -219,6 +219,7 @@ class AppWindow(tk.Tk):
             self.handler.code_number = filter_codes[0]
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
+            self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
 
     def set_divider(self):
         # Get the divider input from the entry box
@@ -229,6 +230,7 @@ class AppWindow(tk.Tk):
             self.handler.stage_divider = int(divider_input)
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
+            self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
         except ValueError:
             print("Invalid stage divider value")
 
