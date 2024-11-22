@@ -112,6 +112,14 @@ class AppWindow(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+        # Bind keyboard shortcuts for increasing and decreasing font size
+        self.bind_all("<Alt-plus>", lambda event: self.increase_font_size())
+        self.bind_all("<Alt-minus>", lambda event: self.decrease_font_size())
+
+        # Set default font size
+        self.default_font_size = 12
+        self.tree.tag_configure('font', font=('TkDefaultFont', self.default_font_size))
+
     def create_font_buttons(self):
         button_frame = ttk.Frame(self)
         button_frame.pack(side=tk.RIGHT, fill=tk.Y)
@@ -146,19 +154,19 @@ class AppWindow(tk.Tk):
         folder_button.grid(row=2, column=2, padx=5, pady=5)
 
     def increase_font_size(self):
-        current_font = tkfont.Font(font=self.tree['font'])
-        new_font_size = current_font.actual()['size'] + 1
-        self.tree.configure(font=(current_font.actual()['family'], new_font_size))
+        self.default_font_size += 1
+        self.tree.tag_configure('font', font=('TkDefaultFont', self.default_font_size))
+        self.update_content_text(self.handler.card_content)
 
     def decrease_font_size(self):
-        current_font = tkfont.Font(font=self.tree['font'])
-        new_font_size = max(8, current_font.actual()['size'] - 1)
-        self.tree.configure(font=(current_font.actual()['family'], new_font_size))
+        self.default_font_size = max(8, self.default_font_size - 1)
+        self.tree.tag_configure('font', font=('TkDefaultFont', self.default_font_size))
+        self.update_content_text(self.handler.card_content)
 
     def set_default_font(self):
         default_font = tkfont.nametofont("TkDefaultFont")
         default_font.configure(size=20, weight="bold")
-        self.tree.configure(font=default_font.actual())
+        self.tree.tag_configure('font', font=default_font.actual())
 
     def update_content_text(self, card_content):
         existing_items = {self.tree.item(item, "values")[0]: item for item in self.tree.get_children()}
@@ -167,21 +175,20 @@ class AppWindow(tk.Tk):
                 item_id = existing_items[name]
                 current_values = self.tree.item(item_id, "values")
                 if current_values != (name, stage, lap):
-                    self.tree.item(item_id, values=(name, stage, lap))
-                    self.tree.item(item_id, tags=('yellow_bg',))
+                    self.tree.item(item_id, values=(name, stage, lap), tags=('font', 'yellow_bg'))
                     print(f"Updated row: {name} - {stage} - {lap}")
                     if lap == self.handler.stage_divider:
-                        self.tree.item(item_id, tags=('red',))
+                        self.tree.item(item_id, tags=('font', 'red'))
                         print(f"Row should be red: {name} - {stage} - {lap}")
-                    self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=()))
+                    self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
             else:
-                item_id = self.tree.insert("", "end", values=(name, stage, lap))
+                item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=('font',))
                 if lap == self.handler.stage_divider:
-                    self.tree.item(item_id, tags=('red',))
+                    self.tree.item(item_id, tags=('font', 'red'))
                     print(f"Row should be red: {name} - {stage} - {lap}")
-                self.tree.item(item_id, tags=('yellow_bg',))
+                self.tree.item(item_id, tags=('font', 'yellow_bg'))
                 print(f"Added row: {name} - {stage} - {lap}")
-                self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=()))
+                self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
         self.tree.tag_configure('red', foreground='red')
         self.tree.tag_configure('yellow_bg', background='yellow')
         print("Updated content text in the window.")
