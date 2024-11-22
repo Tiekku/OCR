@@ -97,6 +97,12 @@ class MyHandler(FileSystemEventHandler):
                 }
                 self.update_counters(self.last_modified_filepath, lines, reset=True)
 
+    def add_new_card(self, card_id, card_name):
+        self.card_names[card_id] = card_name
+        self.card_content[card_id] = (card_name, 0, 0)
+        with open("cardName.txt", "a", encoding='utf-8') as file:
+            file.write(f"CardID:{card_id}, Name:{card_name}\n")
+
 class AppWindow(tk.Tk):
     def __init__(self):
         super().__init__()
