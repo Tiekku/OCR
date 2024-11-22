@@ -159,20 +159,20 @@ class AppWindow(tk.Tk):
     def increase_font_size(self):
         self.default_font_size += 1
         self.tree.tag_configure('font', font=('TkDefaultFont', self.default_font_size))
-        self.style.configure("Treeview", rowheight=self.default_font_size + 10)  # Adjust row height
+        self.style.configure("Treeview", rowheight=self.default_font_size + 12)  # Adjust row height
         self.update_content_text(self.handler.card_content)
 
     def decrease_font_size(self):
         self.default_font_size = max(8, self.default_font_size - 1)
         self.tree.tag_configure('font', font=('TkDefaultFont', self.default_font_size))
-        self.style.configure("Treeview", rowheight=self.default_font_size + 10)  # Adjust row height
+        self.style.configure("Treeview", rowheight=self.default_font_size + 12)  # Adjust row height
         self.update_content_text(self.handler.card_content)
 
     def set_default_font(self):
         default_font = tkfont.nametofont("TkDefaultFont")
         default_font.configure(size=20, weight="bold")
         self.tree.tag_configure('font', font=default_font.actual())
-        self.style.configure("Treeview", rowheight=default_font.actual()['size'] + 10)  # Adjust row height
+        self.style.configure("Treeview", rowheight=default_font.actual()['size'] + 12)  # Adjust row height
 
     def update_content_text(self, card_content):
         existing_items = {self.tree.item(item, "values")[0]: item for item in self.tree.get_children()}
