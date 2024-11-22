@@ -48,13 +48,18 @@ class MyHandler(FileSystemEventHandler):
             modified_time = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
-                    'content': '',
+                    'content': [],
                     'latest_values': {},
                     'last_read_line': 0
                 }
             with open(filepath, 'r', encoding='utf-8') as file:
+                # Read only new lines
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(self.file_data[filepath]['last_read_line'], os.SEEK_SET)
                 lines = file.readlines()
-                self.file_data[filepath]['content'] = lines
+                self.file_data[filepath]['content'].extend(lines)
+                self.file_data[filepath]['last_read_line'] = file_size
                 if self.first_time:
                     self.update_counters(filepath, lines, reset=True)
                     self.first_time = False
@@ -71,7 +76,7 @@ class MyHandler(FileSystemEventHandler):
             last_read_line = 0 if reset else self.file_data[filepath]['last_read_line']
             updated_card_ids = set()
 
-            for line in lines[last_read_line:]:
+            for line in lines:
                 print(f"Reading line: {line.strip()}")
                 values = line.split(';')
                 if len(values) >= 8:
@@ -94,8 +99,6 @@ class MyHandler(FileSystemEventHandler):
                             self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                             updated_card_ids.add(card_id)
                             print(f"Updated card: {card_id}, Stage: {stage_counter}, Lap: {lap_counter}")
-
-            self.file_data[filepath]['last_read_line'] = len(lines)
 
             self.app.update_content_text(self.card_content, updated_card_ids)
 
@@ -129,7 +132,7 @@ class MyHandler(FileSystemEventHandler):
 class AppWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Kierroslaskuri")
+        self.title("Kierroslaskuri-2024_11_22:18:30")
         self.geometry("800x600")
 
         self.style = ttk.Style(self)
@@ -223,7 +226,7 @@ class AppWindow(tk.Tk):
                         if lap == self.handler.stage_divider:
                             tags = ('font', 'yellow_bg', 'bold')
                         self.tree.item(item_id, values=(name, stage, lap), tags=tags)
-                        print(f"Updated row: {item_id}, Name: {name}, Stage: {stage}, Lap: {lap}")
+                        #print(f"Updated row: {item_id}, Name: {name}, Stage: {stage}, Lap: {lap}")
                         self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
                 else:
                     tags = ('font',)
