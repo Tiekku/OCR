@@ -141,14 +141,14 @@ class AppWindow(tk.Tk):
         self.tree.configure(font=default_font.actual())
 
     def update_content_text(self, card_content):
-        for i in self.tree.get_children():
-            self.tree.delete(i)
+        self.tree.delete(*self.tree.get_children())
         for card_id, (name, stage, lap) in card_content.items():
             if lap == 3:
                 self.tree.insert("", "end", values=(name, stage, lap), tags=('red',))
             else:
                 self.tree.insert("", "end", values=(name, stage, lap))
         self.tree.tag_configure('red', foreground='red')
+        self.tree.tag_configure('yellow_bg', background='yellow')
         print("Updated content text in the window.")
 
     def apply_filter(self):
