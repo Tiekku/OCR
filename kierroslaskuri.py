@@ -74,22 +74,17 @@ class MyHandler(FileSystemEventHandler):
                     card_id = values[1].strip()
                     punch_time = values[7].strip()
                     if code_number == self.code_number:
-                        if card_id in new_latest_values:
-                            new_latest_values[card_id] += 1
+                        if card_id in latest_values:
+                            latest_values[card_id] += 1
                         else:
-                            new_latest_values[card_id] = 1
+                            latest_values[card_id] = 1
 
-                        lap_counter = (new_latest_values[card_id] - 1) % self.stage_divider + 1
-                        stage_counter = (new_latest_values[card_id] - 1) // self.stage_divider + 1
+                        lap_counter = (latest_values[card_id] - 1) % self.stage_divider + 1
+                        stage_counter = (latest_values[card_id] - 1) // self.stage_divider + 1
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                         # print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
-            for card_id in list(latest_values.keys()):
-                if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
-                    del latest_values[card_id]
-
-            latest_values.update(new_latest_values)
             self.file_data[filepath]['last_read_line'] = len(lines)
 
             self.app.update_content_text(self.card_content)
