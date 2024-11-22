@@ -17,6 +17,7 @@ class MyHandler(FileSystemEventHandler):
         self.code_number = "31"  # Default code number
         self.stage_divider = 3  # Default stage divider
         self.last_modified_filepath = None  # Store the last modified file path
+        self.last_read_line = 0  # Store the last read line number
 
     # Load card names from a file
     def load_card_names(self, filepath):
@@ -51,21 +52,22 @@ class MyHandler(FileSystemEventHandler):
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
                     'content': '',
-                    'latest_values': {}
+                    'latest_values': {},
+                    'last_read_line': 0
                 }
             with open(filepath, 'r', encoding='utf-8') as file:
-                content = file.read()
-                self.file_data[filepath]['content'] = content
-            self.update_counters(filepath)
+                lines = file.readlines()
+                self.file_data[filepath]['content'] = lines
+                self.update_counters(filepath, lines)
 
-    def update_counters(self, filepath):
+    def update_counters(self, filepath, lines):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
-            lines = content.split('\n')
             latest_values = self.file_data[filepath]['latest_values']
             new_latest_values = {}
+            last_read_line = self.file_data[filepath]['last_read_line']
 
-            for line in lines:
+            for line in lines[last_read_line:]:
                 values = line.split(';')
                 if len(values) >= 8:
                     code_number = values[2].strip()
@@ -88,6 +90,7 @@ class MyHandler(FileSystemEventHandler):
                     del latest_values[card_id]
 
             latest_values.update(new_latest_values)
+            self.file_data[filepath]['last_read_line'] = len(lines)
 
             self.app.update_content_text(self.card_content)
 
@@ -219,7 +222,7 @@ class AppWindow(tk.Tk):
             # print(f"Updated code number to: {self.handler.code_number}")
             # Recalculate counters with the new code number
             if self.handler.last_modified_filepath:
-                self.handler.update_counters(self.handler.last_modified_filepath)
+                self.handler.update_counters(self.handler.last_modified_filepath, self.file_data[self.handler.last_modified_filepath]['content'])
 
     def set_divider(self):
         # Get the divider input from the entry box
@@ -231,7 +234,7 @@ class AppWindow(tk.Tk):
             # print(f"Updated stage divider to: {self.handler.stage_divider}")
             # Recalculate counters with the new stage divider
             if self.handler.last_modified_filepath:
-                self.handler.update_counters(self.handler.last_modified_filepath)
+                self.handler.update_counters(self.handler.last_modified_filepath, self.file_data[self.handler.last_modified_filepath]['content'])
         except ValueError:
             print("Invalid stage divider value")
 
