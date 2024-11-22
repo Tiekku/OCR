@@ -25,7 +25,7 @@ class MyHandler(FileSystemEventHandler):
                     parts = line.split(", Name:")
                     if len(parts) == 2:
                         card_id = parts[0].replace("CardID:", "").strip()
-                        card_name = parts[1].strip()
+                        card_name = parts[1].strip()[:40]  # Trim name to 40 characters
                         self.card_names[card_id] = card_name
                         self.card_content[card_id] = f"{card_name:<40} 0  -  0"
                         print(f"Added card: {card_id} - {card_name}")
