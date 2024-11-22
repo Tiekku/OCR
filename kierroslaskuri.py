@@ -91,6 +91,7 @@ class MyHandler(FileSystemEventHandler):
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                         updated_card_ids.add(card_id)
+                        print(f"Updated card: {card_id}, Stage: {stage_counter}, Lap: {lap_counter}")
 
             self.file_data[filepath]['last_read_line'] = len(lines)
 
@@ -220,14 +221,14 @@ class AppWindow(tk.Tk):
                         if lap == self.handler.stage_divider:
                             tags = ('font', 'yellow_bg', 'bold')
                         self.tree.item(item_id, values=(name, stage, lap), tags=tags)
-                        print(f"Updated row: {item_id}")
+                        print(f"Updated row: {item_id}, Name: {name}, Stage: {stage}, Lap: {lap}")
                         self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
                 else:
                     tags = ('font',)
                     if lap == self.handler.stage_divider:
                         tags = ('font', 'yellow_bg', 'bold')
                     item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=tags)
-                    print(f"Added row: {item_id}")
+                    print(f"Added row: {item_id}, Name: {name}, Stage: {stage}, Lap: {lap}")
                     self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
         self.tree.tag_configure('red', foreground='red')
         self.tree.tag_configure('yellow_bg', background='yellow')
