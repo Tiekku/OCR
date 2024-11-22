@@ -15,6 +15,7 @@ class MyHandler(FileSystemEventHandler):
         self.card_names = {}
         self.card_content = {}
         self.code_number = "31"  # Default code number
+        self.stage_divider = 3  # Default stage divider
         self.last_modified_filepath = None  # Store the last modified file path
 
     # Load card names from a file
@@ -75,8 +76,8 @@ class MyHandler(FileSystemEventHandler):
                         else:
                             new_latest_values[card_id] = 1
 
-                        lap_counter = (new_latest_values[card_id] - 1) % 3 + 1
-                        stage_counter = (new_latest_values[card_id] - 1) // 3 + 1
+                        lap_counter = (new_latest_values[card_id] - 1) % self.stage_divider + 1
+                        stage_counter = (new_latest_values[card_id] - 1) // self.stage_divider + 1
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                         print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
@@ -125,14 +126,24 @@ class AppWindow(tk.Tk):
         filter_button = ttk.Button(button_frame, text="Apply Filter", command=self.apply_filter)
         filter_button.grid(row=0, column=2, padx=5, pady=5)
 
+        divider_label = ttk.Label(button_frame, text="Stage Divider:")
+        divider_label.grid(row=1, column=0, padx=5, pady=5)
+
+        self.divider_entry = tk.Entry(button_frame)
+        self.divider_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.divider_entry.insert(0, "3")  # Set default value to 3
+
+        divider_button = ttk.Button(button_frame, text="Set Divider", command=self.set_divider)
+        divider_button.grid(row=1, column=2, padx=5, pady=5)
+
         plus_button = ttk.Button(button_frame, text="+", command=self.increase_font_size)
-        plus_button.grid(row=1, column=0, padx=5, pady=5)
+        plus_button.grid(row=2, column=0, padx=5, pady=5)
 
         minus_button = ttk.Button(button_frame, text="-", command=self.decrease_font_size)
-        minus_button.grid(row=1, column=1, padx=5, pady=5)
+        minus_button.grid(row=2, column=1, padx=5, pady=5)
 
         folder_button = ttk.Button(button_frame, text="Select Folder", command=self.start_observer)
-        folder_button.grid(row=1, column=2, padx=5, pady=5)
+        folder_button.grid(row=2, column=2, padx=5, pady=5)
 
     def increase_font_size(self):
         current_font = tkfont.Font(font=self.tree['font'])
@@ -159,13 +170,13 @@ class AppWindow(tk.Tk):
                     self.tree.item(item_id, values=(name, stage, lap))
                     self.tree.item(item_id, tags=('yellow_bg',))
                     print(f"Updated row: {name} - {stage} - {lap}")
-                    if lap == 3:
+                    if lap == self.handler.stage_divider:
                         self.tree.item(item_id, tags=('red',))
                         print(f"Row should be red: {name} - {stage} - {lap}")
                     self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=()))
             else:
                 item_id = self.tree.insert("", "end", values=(name, stage, lap))
-                if lap == 3:
+                if lap == self.handler.stage_divider:
                     self.tree.item(item_id, tags=('red',))
                     print(f"Row should be red: {name} - {stage} - {lap}")
                 self.tree.item(item_id, tags=('yellow_bg',))
@@ -195,6 +206,20 @@ class AppWindow(tk.Tk):
             # Recalculate counters with the new code number
             if self.handler.last_modified_filepath:
                 self.handler.update_counters(self.handler.last_modified_filepath)
+
+    def set_divider(self):
+        # Get the divider input from the entry box
+        divider_input = self.divider_entry.get()
+        
+        # Update the stage divider
+        try:
+            self.handler.stage_divider = int(divider_input)
+            print(f"Updated stage divider to: {self.handler.stage_divider}")
+            # Recalculate counters with the new stage divider
+            if self.handler.last_modified_filepath:
+                self.handler.update_counters(self.handler.last_modified_filepath)
+        except ValueError:
+            print("Invalid stage divider value")
 
     def start_observer(self):
         directory = filedialog.askdirectory()
