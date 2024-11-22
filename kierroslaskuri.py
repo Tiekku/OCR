@@ -19,6 +19,7 @@ class MyHandler(FileSystemEventHandler):
         self.last_modified_filepath = None  # Store the last modified file path
         self.last_read_line = 0  # Store the last read line number
         self.card_name_filepath = None  # Store the card name file path
+        self.first_time = True  # Flag to check if it's the first time the file was changed
 
     # Load card names from a file
     def load_card_names(self, filepath):
@@ -54,12 +55,19 @@ class MyHandler(FileSystemEventHandler):
             with open(filepath, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
                 self.file_data[filepath]['content'] = lines
-                self.update_counters(filepath, lines, reset=False)
+                if self.first_time:
+                    self.update_counters(filepath, lines, reset=True)
+                    self.first_time = False
+                else:
+                    self.update_counters(filepath, lines, reset=False)
 
     def update_counters(self, filepath, lines, reset=False):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
             latest_values = self.file_data[filepath]['latest_values']
+            if reset:
+                latest_values.clear()
+                self.update_counters_from_card_names()
             last_read_line = 0 if reset else self.file_data[filepath]['last_read_line']
             updated_card_ids = set()
 
@@ -92,6 +100,7 @@ class MyHandler(FileSystemEventHandler):
         self.file_data = {}
         self.card_content = {}
         self.last_read_line = 0
+        self.first_time = True  # Reset the flag to ensure full update on next file change
         if self.last_modified_filepath:
             with open(self.last_modified_filepath, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
@@ -106,8 +115,13 @@ class MyHandler(FileSystemEventHandler):
         self.card_names[card_id] = card_name
         self.card_content[card_id] = (card_name, 0, 0)
         if self.card_name_filepath:
-            with open(self.card_name_filepath, "a", encoding='utf-8') as file:
-                file.write(f"CardID:{card_id}, Name:{card_name}\r\n")
+            with open(self.card_name_filepath, "a+", encoding='utf-8') as file:
+                file.seek(0, os.SEEK_END)
+                if file.tell() > 0:
+                    file.seek(file.tell() - 1, os.SEEK_SET)
+                    if file.read(1) != '\n':
+                        file.write("\n")
+                file.write(f"CardID:{card_id}, Name:{card_name}\n")
 
 class AppWindow(tk.Tk):
     def __init__(self):
