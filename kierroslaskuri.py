@@ -23,7 +23,7 @@ class MyHandler(FileSystemEventHandler):
         with open(filepath, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for line in lines:
-                print(f"Read line: {line.strip()}")
+                # print(f"Read line: {line.strip()}")
                 if line.startswith("CardID:"):
                     parts = line.split(", Name:")
                     if len(parts) == 2:
@@ -31,9 +31,10 @@ class MyHandler(FileSystemEventHandler):
                         card_name = parts[1].strip()[:40]  # Trim name to 40 characters
                         self.card_names[card_id] = card_name
                         self.card_content[card_id] = (card_name, 0, 0)
-                        print(f"Added card: {card_id} - {card_name}")
+                        # print(f"Added card: {card_id} - {card_name}")
                     else:
-                        print(f"Skipping invalid line in cardName.txt: {line}")
+                        # print(f"Skipping invalid line in cardName.txt: {line}")
+                        pass
         self.update_counters_from_card_names()
         self.app.update_content_text(self.card_content)
 
@@ -46,7 +47,7 @@ class MyHandler(FileSystemEventHandler):
             filepath = event.src_path
             self.last_modified_filepath = filepath  # Store the last modified file path
             modified_time = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
-            print(f"File modified: {filepath} at {modified_time}")
+            # print(f"File modified: {filepath} at {modified_time}")
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
                     'content': '',
@@ -80,7 +81,7 @@ class MyHandler(FileSystemEventHandler):
                         stage_counter = (new_latest_values[card_id] - 1) // self.stage_divider + 1
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
-                        print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
+                        # print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             for card_id in list(latest_values.keys()):
                 if card_id not in [values[1].strip() if len(values) >= 8 else "" for values in lines]:
@@ -181,22 +182,22 @@ class AppWindow(tk.Tk):
                 item_id = existing_items[name]
                 current_values = self.tree.item(item_id, "values")
                 if current_values != (name, stage, lap):
-                    self.tree.item(item_id, values=(name, stage, lap), tags=('font', 'yellow_bg'))
-                    print(f"Updated row: {name} - {stage} - {lap}")
+                    tags = ('font', 'yellow_bg')
                     if lap == self.handler.stage_divider:
-                        self.tree.item(item_id, tags=('font', 'red'))
-                        print(f"Row should be red: {name} - {stage} - {lap}")
+                        tags = ('font', 'yellow_bg', 'bold')
+                    self.tree.item(item_id, values=(name, stage, lap), tags=tags)
+                    print(f"Updated row: {item_id}")
                     self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
             else:
-                item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=('font',))
+                tags = ('font',)
                 if lap == self.handler.stage_divider:
-                    self.tree.item(item_id, tags=('font', 'red'))
-                    print(f"Row should be red: {name} - {stage} - {lap}")
-                self.tree.item(item_id, tags=('font', 'yellow_bg'))
-                print(f"Added row: {name} - {stage} - {lap}")
+                    tags = ('font', 'yellow_bg', 'bold')
+                item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=tags)
+                print(f"Added row: {item_id}")
                 self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
         self.tree.tag_configure('red', foreground='red')
         self.tree.tag_configure('yellow_bg', background='yellow')
+        self.tree.tag_configure('bold', font=('TkDefaultFont', self.default_font_size, 'bold'))
         print("Updated content text in the window.")
 
     def apply_filter(self):
@@ -215,7 +216,7 @@ class AppWindow(tk.Tk):
         # Update the code number based on the filter input
         if filter_codes:
             self.handler.code_number = filter_codes[0]
-            print(f"Updated code number to: {self.handler.code_number}")
+            # print(f"Updated code number to: {self.handler.code_number}")
             # Recalculate counters with the new code number
             if self.handler.last_modified_filepath:
                 self.handler.update_counters(self.handler.last_modified_filepath)
@@ -227,7 +228,7 @@ class AppWindow(tk.Tk):
         # Update the stage divider
         try:
             self.handler.stage_divider = int(divider_input)
-            print(f"Updated stage divider to: {self.handler.stage_divider}")
+            # print(f"Updated stage divider to: {self.handler.stage_divider}")
             # Recalculate counters with the new stage divider
             if self.handler.last_modified_filepath:
                 self.handler.update_counters(self.handler.last_modified_filepath)
