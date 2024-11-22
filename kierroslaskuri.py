@@ -27,7 +27,7 @@ class MyHandler(FileSystemEventHandler):
                         card_id = parts[0].replace("CardID:", "").strip()
                         card_name = parts[1].strip()[:40]  # Trim name to 40 characters
                         self.card_names[card_id] = card_name
-                        self.card_content[card_id] = f"{card_name:<40} 0  -  0"
+                        self.card_content[card_id] = (card_name, 0, 0)
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
@@ -69,9 +69,8 @@ class MyHandler(FileSystemEventHandler):
 
                         lap_counter = (new_latest_values[card_id] - 1) % 3 + 1
                         stage_counter = (new_latest_values[card_id] - 1) // 3 + 1
-                        counter_text = f"{stage_counter:<2}  -  {lap_counter:<2}"
 
-                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id):<40} {counter_text}"
+                        self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                         print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             for card_id in list(latest_values.keys()):
@@ -88,9 +87,14 @@ class AppWindow(tk.Tk):
         self.title("Kierroslaskuri")
         self.geometry("800x600")
 
-        self.content_text = tk.Text(self)
-        self.content_text.pack(expand=True, fill=tk.BOTH)
-        self.set_default_font()
+        self.tree = ttk.Treeview(self, columns=("Name", "Stage", "Lap"), show='headings')
+        self.tree.heading("Name", text="Name")
+        self.tree.heading("Stage", text="Stage")
+        self.tree.heading("Lap", text="Lap")
+        self.tree.column("Name", width=300)
+        self.tree.column("Stage", width=50, anchor='center')
+        self.tree.column("Lap", width=50, anchor='center')
+        self.tree.pack(expand=True, fill=tk.BOTH)
 
         self.create_font_buttons()
 
@@ -122,29 +126,29 @@ class AppWindow(tk.Tk):
         folder_button.grid(row=1, column=2, padx=5, pady=5)
 
     def increase_font_size(self):
-        current_font = tkfont.Font(font=self.content_text['font'])
+        current_font = tkfont.Font(font=self.tree['font'])
         new_font_size = current_font.actual()['size'] + 1
-        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
+        self.tree.configure(font=(current_font.actual()['family'], new_font_size))
 
     def decrease_font_size(self):
-        current_font = tkfont.Font(font=self.content_text['font'])
+        current_font = tkfont.Font(font=self.tree['font'])
         new_font_size = max(8, current_font.actual()['size'] - 1)
-        self.content_text.configure(font=(current_font.actual()['family'], new_font_size))
+        self.tree.configure(font=(current_font.actual()['family'], new_font_size))
 
     def set_default_font(self):
         default_font = tkfont.nametofont("TkDefaultFont")
         default_font.configure(size=20, weight="bold")
-        self.content_text.configure(font=default_font.actual())
+        self.tree.configure(font=default_font.actual())
 
     def update_content_text(self, card_content):
-        self.content_text.delete(1.0, tk.END)
-        for card_id, content in card_content.items():
-            if "  -  3" in content:
-                self.content_text.insert(tk.END, f"{content}\n", 'red')
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        for card_id, (name, stage, lap) in card_content.items():
+            if lap == 3:
+                self.tree.insert("", "end", values=(name, stage, lap), tags=('red',))
             else:
-                self.content_text.insert(tk.END, f"{content}\n")
-        self.content_text.tag_config('red', foreground='red')
-        self.content_text.tag_config('yellow_bg', background='yellow')
+                self.tree.insert("", "end", values=(name, stage, lap))
+        self.tree.tag_configure('red', foreground='red')
         print("Updated content text in the window.")
 
     def apply_filter(self):
