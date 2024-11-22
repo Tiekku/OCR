@@ -72,6 +72,7 @@ class MyHandler(FileSystemEventHandler):
             updated_card_ids = set()
 
             for line in lines[last_read_line:]:
+                print(f"Reading line: {line.strip()}")
                 values = line.split(';')
                 if len(values) >= 8:
                     code_number = values[2].strip()
@@ -89,9 +90,10 @@ class MyHandler(FileSystemEventHandler):
                         lap_counter = (latest_values[card_id] - 1) % self.stage_divider + 1
                         stage_counter = (latest_values[card_id] - 1) // self.stage_divider + 1
 
-                        self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
-                        updated_card_ids.add(card_id)
-                        print(f"Updated card: {card_id}, Stage: {stage_counter}, Lap: {lap_counter}")
+                        if self.card_content.get(card_id) != (self.card_names.get(card_id, card_id), stage_counter, lap_counter):
+                            self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
+                            updated_card_ids.add(card_id)
+                            print(f"Updated card: {card_id}, Stage: {stage_counter}, Lap: {lap_counter}")
 
             self.file_data[filepath]['last_read_line'] = len(lines)
 
