@@ -18,9 +18,11 @@ class MyHandler(FileSystemEventHandler):
         self.stage_divider = 3  # Default stage divider
         self.last_modified_filepath = None  # Store the last modified file path
         self.last_read_line = 0  # Store the last read line number
+        self.card_name_filepath = None  # Store the card name file path
 
     # Load card names from a file
     def load_card_names(self, filepath):
+        self.card_name_filepath = filepath
         with open(filepath, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for line in lines:
@@ -68,6 +70,9 @@ class MyHandler(FileSystemEventHandler):
                     card_id = values[1].strip()
                     punch_time = values[7].strip()
                     if code_number == self.code_number:
+                        if card_id not in self.card_names:
+                            card_name = f"Unknown {card_id}"
+                            self.add_new_card(card_id, card_name)
                         if card_id in latest_values:
                             latest_values[card_id] += 1
                         else:
@@ -100,8 +105,9 @@ class MyHandler(FileSystemEventHandler):
     def add_new_card(self, card_id, card_name):
         self.card_names[card_id] = card_name
         self.card_content[card_id] = (card_name, 0, 0)
-        with open("cardName.txt", "a", encoding='utf-8') as file:
-            file.write(f"CardID:{card_id}, Name:{card_name}\n")
+        if self.card_name_filepath:
+            with open(self.card_name_filepath, "a", encoding='utf-8') as file:
+                file.write(f"CardID:{card_id}, Name:{card_name}\n")
 
 class AppWindow(tk.Tk):
     def __init__(self):
@@ -226,7 +232,7 @@ class AppWindow(tk.Tk):
             self.handler.code_number = filter_codes[0]
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
-            self.handler.load_card_names(self.handler.last_modified_filepath)
+            self.handler.load_card_names(self.handler.card_name_filepath)
             self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
 
     def set_divider(self):
@@ -238,7 +244,7 @@ class AppWindow(tk.Tk):
             self.handler.stage_divider = int(divider_input)
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
-            self.handler.load_card_names(self.handler.last_modified_filepath)
+            self.handler.load_card_names(self.handler.card_name_filepath)
             self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
         except ValueError:
             print("Invalid stage divider value")
