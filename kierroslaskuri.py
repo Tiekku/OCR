@@ -86,6 +86,7 @@ class MyHandler(FileSystemEventHandler):
     def reset_counters(self):
         self.file_data = {}
         self.card_content = {}
+        self.last_read_line = 0
         if self.last_modified_filepath:
             with open(self.last_modified_filepath, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
@@ -219,6 +220,7 @@ class AppWindow(tk.Tk):
             self.handler.code_number = filter_codes[0]
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
+            self.handler.load_card_names(self.handler.last_modified_filepath)
             self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
 
     def set_divider(self):
@@ -230,6 +232,7 @@ class AppWindow(tk.Tk):
             self.handler.stage_divider = int(divider_input)
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
+            self.handler.load_card_names(self.handler.last_modified_filepath)
             self.handler.update_counters(self.handler.last_modified_filepath, self.handler.file_data[self.handler.last_modified_filepath]['content'], reset=True)
         except ValueError:
             print("Invalid stage divider value")
