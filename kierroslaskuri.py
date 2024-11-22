@@ -58,13 +58,13 @@ class MyHandler(FileSystemEventHandler):
             with open(filepath, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
                 self.file_data[filepath]['content'] = lines
-                self.update_counters(filepath, lines)
+                self.update_counters(filepath, lines, reset=False)
 
-    def update_counters(self, filepath, lines):
+    def update_counters(self, filepath, lines, reset=False):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
             latest_values = self.file_data[filepath]['latest_values']
-            last_read_line = self.file_data[filepath]['last_read_line']
+            last_read_line = 0 if reset else self.file_data[filepath]['last_read_line']
 
             for line in lines[last_read_line:]:
                 values = line.split(';')
@@ -99,7 +99,7 @@ class MyHandler(FileSystemEventHandler):
                     'latest_values': {},
                     'last_read_line': 0
                 }
-                self.update_counters(self.last_modified_filepath, lines)
+                self.update_counters(self.last_modified_filepath, lines, reset=True)
 
 class AppWindow(tk.Tk):
     def __init__(self):
