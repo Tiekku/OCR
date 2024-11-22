@@ -65,6 +65,7 @@ class MyHandler(FileSystemEventHandler):
             content = self.file_data[filepath]['content']
             latest_values = self.file_data[filepath]['latest_values']
             last_read_line = 0 if reset else self.file_data[filepath]['last_read_line']
+            updated_card_ids = set()
 
             for line in lines[last_read_line:]:
                 values = line.split(';')
@@ -82,11 +83,12 @@ class MyHandler(FileSystemEventHandler):
                         stage_counter = (latest_values[card_id] - 1) // self.stage_divider + 1
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
+                        updated_card_ids.add(card_id)
                         # print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             self.file_data[filepath]['last_read_line'] = len(lines)
 
-            self.app.update_content_text(self.card_content)
+            self.app.update_content_text(self.card_content, updated_card_ids)
 
     def reset_counters(self):
         self.file_data = {}
@@ -185,26 +187,28 @@ class AppWindow(tk.Tk):
         self.tree.tag_configure('font', font=default_font.actual())
         self.style.configure("Treeview", rowheight=default_font.actual()['size'] + 12)  # Adjust row height
 
-    def update_content_text(self, card_content):
+    def update_content_text(self, card_content, updated_card_ids=None):
         existing_items = {self.tree.item(item, "values")[0]: item for item in self.tree.get_children()}
+        updated_card_ids = updated_card_ids or set()
         for card_id, (name, stage, lap) in card_content.items():
-            if name in existing_items:
-                item_id = existing_items[name]
-                current_values = self.tree.item(item_id, "values")
-                if current_values != (name, stage, lap):
-                    tags = ('font', 'yellow_bg')
+            if card_id in updated_card_ids:
+                if name in existing_items:
+                    item_id = existing_items[name]
+                    current_values = self.tree.item(item_id, "values")
+                    if current_values != (name, stage, lap):
+                        tags = ('font', 'yellow_bg')
+                        if lap == self.handler.stage_divider:
+                            tags = ('font', 'yellow_bg', 'bold')
+                        self.tree.item(item_id, values=(name, stage, lap), tags=tags)
+                        print(f"Updated row: {item_id}")
+                        self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
+                else:
+                    tags = ('font',)
                     if lap == self.handler.stage_divider:
                         tags = ('font', 'yellow_bg', 'bold')
-                    self.tree.item(item_id, values=(name, stage, lap), tags=tags)
-                    print(f"Updated row: {item_id}")
+                    item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=tags)
+                    print(f"Added row: {item_id}")
                     self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
-            else:
-                tags = ('font',)
-                if lap == self.handler.stage_divider:
-                    tags = ('font', 'yellow_bg', 'bold')
-                item_id = self.tree.insert("", "end", values=(name, stage, lap), tags=tags)
-                print(f"Added row: {item_id}")
-                self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=('font',)))
         self.tree.tag_configure('red', foreground='red')
         self.tree.tag_configure('yellow_bg', background='yellow')
         self.tree.tag_configure('bold', font=('TkDefaultFont', self.default_font_size, 'bold'))
@@ -247,6 +251,7 @@ class AppWindow(tk.Tk):
             self.observer.schedule(self.handler, directory, recursive=True)
             self.observer.start()
             self.handler.load_card_names(filepath)
+            self.handler.reset_counters()  # Reset counters and read the file from the beginning
 
     def stop_observer(self):
         if self.observer.is_alive():
