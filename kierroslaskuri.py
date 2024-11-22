@@ -15,6 +15,7 @@ class MyHandler(FileSystemEventHandler):
         self.card_names = {}
         self.card_content = {}
         self.code_number = "31"  # Default code number
+        self.last_modified_filepath = None  # Store the last modified file path
 
     # Load card names from a file
     def load_card_names(self, filepath):
@@ -42,6 +43,7 @@ class MyHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if not event.is_directory:
             filepath = event.src_path
+            self.last_modified_filepath = filepath  # Store the last modified file path
             modified_time = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
             print(f"File modified: {filepath} at {modified_time}")
             if filepath not in self.file_data:
@@ -191,8 +193,8 @@ class AppWindow(tk.Tk):
             self.handler.code_number = filter_codes[0]
             print(f"Updated code number to: {self.handler.code_number}")
             # Recalculate counters with the new code number
-            for filepath in self.handler.file_data:
-                self.handler.update_counters(filepath)
+            if self.handler.last_modified_filepath:
+                self.handler.update_counters(self.handler.last_modified_filepath)
 
     def start_observer(self):
         directory = filedialog.askdirectory()
