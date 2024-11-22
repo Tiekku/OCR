@@ -64,7 +64,6 @@ class MyHandler(FileSystemEventHandler):
         if filepath in self.file_data:
             content = self.file_data[filepath]['content']
             latest_values = self.file_data[filepath]['latest_values']
-            new_latest_values = {}
             last_read_line = self.file_data[filepath]['last_read_line']
 
             for line in lines[last_read_line:]:
@@ -88,6 +87,19 @@ class MyHandler(FileSystemEventHandler):
             self.file_data[filepath]['last_read_line'] = len(lines)
 
             self.app.update_content_text(self.card_content)
+
+    def reset_counters(self):
+        self.file_data = {}
+        self.card_content = {}
+        if self.last_modified_filepath:
+            with open(self.last_modified_filepath, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                self.file_data[self.last_modified_filepath] = {
+                    'content': lines,
+                    'latest_values': {},
+                    'last_read_line': 0
+                }
+                self.update_counters(self.last_modified_filepath, lines)
 
 class AppWindow(tk.Tk):
     def __init__(self):
@@ -227,9 +239,8 @@ class AppWindow(tk.Tk):
         try:
             self.handler.stage_divider = int(divider_input)
             # print(f"Updated stage divider to: {self.handler.stage_divider}")
-            # Recalculate counters with the new stage divider
-            if self.handler.last_modified_filepath:
-                self.handler.update_counters(self.handler.last_modified_filepath, self.file_data[self.handler.last_modified_filepath]['content'])
+            # Reset counters and read the file from the beginning
+            self.handler.reset_counters()
         except ValueError:
             print("Invalid stage divider value")
 
