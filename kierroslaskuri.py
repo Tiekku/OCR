@@ -24,7 +24,6 @@ class MyHandler(FileSystemEventHandler):
         with open(filepath, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for line in lines:
-                # print(f"Read line: {line.strip()}")
                 if line.startswith("CardID:"):
                     parts = line.split(", Name:")
                     if len(parts) == 2:
@@ -32,10 +31,6 @@ class MyHandler(FileSystemEventHandler):
                         card_name = parts[1].strip()[:40]  # Trim name to 40 characters
                         self.card_names[card_id] = card_name
                         self.card_content[card_id] = (card_name, 0, 0)
-                        # print(f"Added card: {card_id} - {card_name}")
-                    else:
-                        # print(f"Skipping invalid line in cardName.txt: {line}")
-                        pass
         self.update_counters_from_card_names()
         self.app.update_content_text(self.card_content)
 
@@ -48,7 +43,6 @@ class MyHandler(FileSystemEventHandler):
             filepath = event.src_path
             self.last_modified_filepath = filepath  # Store the last modified file path
             modified_time = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
-            # print(f"File modified: {filepath} at {modified_time}")
             if filepath not in self.file_data:
                 self.file_data[filepath] = {
                     'content': '',
@@ -84,7 +78,6 @@ class MyHandler(FileSystemEventHandler):
 
                         self.card_content[card_id] = (self.card_names.get(card_id, card_id), stage_counter, lap_counter)
                         updated_card_ids.add(card_id)
-                        # print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             self.file_data[filepath]['last_read_line'] = len(lines)
 
@@ -224,7 +217,6 @@ class AppWindow(tk.Tk):
         # Update the code number based on the filter input
         if filter_codes:
             self.handler.code_number = filter_codes[0]
-            # print(f"Updated code number to: {self.handler.code_number}")
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
 
@@ -235,7 +227,6 @@ class AppWindow(tk.Tk):
         # Update the stage divider
         try:
             self.handler.stage_divider = int(divider_input)
-            # print(f"Updated stage divider to: {self.handler.stage_divider}")
             # Reset counters and read the file from the beginning
             self.handler.reset_counters()
         except ValueError:
