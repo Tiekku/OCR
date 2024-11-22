@@ -217,19 +217,12 @@ class AppWindow(tk.Tk):
         # Split the input into individual codes
         filter_codes = filter_input.split(',')
         
-        # Filter the card content based on the input codes
-        filtered_content = {card_id: line for card_id, line in self.handler.card_content.items() if any(code in line for code in filter_codes)}
-        
-        # Update the content text with the filtered content
-        self.update_content_text(filtered_content)
-
         # Update the code number based on the filter input
         if filter_codes:
             self.handler.code_number = filter_codes[0]
             # print(f"Updated code number to: {self.handler.code_number}")
-            # Recalculate counters with the new code number
-            if self.handler.last_modified_filepath:
-                self.handler.update_counters(self.handler.last_modified_filepath, self.file_data[self.handler.last_modified_filepath]['content'])
+            # Reset counters and read the file from the beginning
+            self.handler.reset_counters()
 
     def set_divider(self):
         # Get the divider input from the entry box
