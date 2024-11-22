@@ -31,6 +31,7 @@ class MyHandler(FileSystemEventHandler):
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
+        self.update_counters(filepath)
         self.app.update_content_text(self.card_content)
 
     def on_modified(self, event):
@@ -141,12 +142,27 @@ class AppWindow(tk.Tk):
         self.tree.configure(font=default_font.actual())
 
     def update_content_text(self, card_content):
-        self.tree.delete(*self.tree.get_children())
+        existing_items = {self.tree.item(item, "values")[0]: item for item in self.tree.get_children()}
         for card_id, (name, stage, lap) in card_content.items():
-            if lap == 3:
-                self.tree.insert("", "end", values=(name, stage, lap), tags=('red',))
+            if name in existing_items:
+                item_id = existing_items[name]
+                current_values = self.tree.item(item_id, "values")
+                if current_values != (name, stage, lap):
+                    self.tree.item(item_id, values=(name, stage, lap))
+                    self.tree.item(item_id, tags=('yellow_bg',))
+                    print(f"Updated row: {name} - {stage} - {lap}")
+                    if lap == 3:
+                        self.tree.item(item_id, tags=('red',))
+                        print(f"Row should be red: {name} - {stage} - {lap}")
+                    self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=()))
             else:
-                self.tree.insert("", "end", values=(name, stage, lap))
+                item_id = self.tree.insert("", "end", values=(name, stage, lap))
+                if lap == 3:
+                    self.tree.item(item_id, tags=('red',))
+                    print(f"Row should be red: {name} - {stage} - {lap}")
+                self.tree.item(item_id, tags=('yellow_bg',))
+                print(f"Added row: {name} - {stage} - {lap}")
+                self.after(5000, lambda item_id=item_id: self.tree.item(item_id, tags=()))
         self.tree.tag_configure('red', foreground='red')
         self.tree.tag_configure('yellow_bg', background='yellow')
         print("Updated content text in the window.")
