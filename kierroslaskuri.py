@@ -31,8 +31,12 @@ class MyHandler(FileSystemEventHandler):
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
-        self.update_counters(filepath)
+        self.update_counters_from_card_names()
         self.app.update_content_text(self.card_content)
+
+    def update_counters_from_card_names(self):
+        for card_id in self.card_names:
+            self.card_content[card_id] = (self.card_names[card_id], 0, 0)
 
     def on_modified(self, event):
         if not event.is_directory:
