@@ -107,7 +107,7 @@ class MyHandler(FileSystemEventHandler):
         self.card_content[card_id] = (card_name, 0, 0)
         if self.card_name_filepath:
             with open(self.card_name_filepath, "a", encoding='utf-8') as file:
-                file.write(f"CardID:{card_id}, Name:{card_name}\n")
+                file.write(f"CardID:{card_id}, Name:{card_name}\r\n")
 
 class AppWindow(tk.Tk):
     def __init__(self):
