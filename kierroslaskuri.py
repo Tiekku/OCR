@@ -14,6 +14,7 @@ class MyHandler(FileSystemEventHandler):
         self.file_data = {}
         self.card_names = {}
         self.card_content = {}
+        self.code_number = "31"  # Default code number
 
     # Load card names from a file
     def load_card_names(self, filepath):
@@ -66,7 +67,7 @@ class MyHandler(FileSystemEventHandler):
                     code_number = values[2].strip()
                     card_id = values[1].strip()
                     punch_time = values[7].strip()
-                    if code_number == '31':
+                    if code_number == self.code_number:
                         if card_id in new_latest_values:
                             new_latest_values[card_id] += 1
                         else:
@@ -117,6 +118,7 @@ class AppWindow(tk.Tk):
 
         self.filter_entry = tk.Entry(button_frame)
         self.filter_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.filter_entry.insert(0, "31")  # Set default value to 31
 
         filter_button = ttk.Button(button_frame, text="Apply Filter", command=self.apply_filter)
         filter_button.grid(row=0, column=2, padx=5, pady=5)
@@ -183,6 +185,14 @@ class AppWindow(tk.Tk):
         
         # Update the content text with the filtered content
         self.update_content_text(filtered_content)
+
+        # Update the code number based on the filter input
+        if filter_codes:
+            self.handler.code_number = filter_codes[0]
+            print(f"Updated code number to: {self.handler.code_number}")
+            # Recalculate counters with the new code number
+            for filepath in self.handler.file_data:
+                self.handler.update_counters(filepath)
 
     def start_observer(self):
         directory = filedialog.askdirectory()
