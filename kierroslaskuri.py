@@ -189,7 +189,7 @@ class AppWindow(tk.Tk):
 
     def update_content_text(self, card_content, updated_card_ids=None):
         existing_items = {self.tree.item(item, "values")[0]: item for item in self.tree.get_children()}
-        updated_card_ids = updated_card_ids or set()
+        updated_card_ids = updated_card_ids or set(card_content.keys())
         for card_id, (name, stage, lap) in card_content.items():
             if card_id in updated_card_ids:
                 if name in existing_items:
