@@ -27,7 +27,7 @@ class MyHandler(FileSystemEventHandler):
                         card_id = parts[0].replace("CardID:", "").strip()
                         card_name = parts[1].strip()
                         self.card_names[card_id] = card_name
-                        self.card_content[card_id] = f"{card_name} - 0 - 0"
+                        self.card_content[card_id] = f"{card_name:<30} 0 0"
                         print(f"Added card: {card_id} - {card_name}")
                     else:
                         print(f"Skipping invalid line in cardName.txt: {line}")
@@ -69,9 +69,9 @@ class MyHandler(FileSystemEventHandler):
 
                         lap_counter = (new_latest_values[card_id] - 1) % 3 + 1
                         stage_counter = (new_latest_values[card_id] - 1) // 3 + 1
-                        counter_text = f"{stage_counter} - {lap_counter}"
+                        counter_text = f"{stage_counter:<5} {lap_counter:<5}"
 
-                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id)} - {counter_text}"
+                        self.card_content[card_id] = f"{self.card_names.get(card_id, card_id):<30} {counter_text}"
                         print(f"{self.card_names.get(card_id, card_id)} - {stage_counter} - {lap_counter}")
 
             for card_id in list(latest_values.keys()):
@@ -144,6 +144,7 @@ class AppWindow(tk.Tk):
             else:
                 self.content_text.insert(tk.END, f"{content}\n")
         self.content_text.tag_config('red', foreground='red')
+        self.content_text.tag_config('yellow_bg', background='yellow')
         print("Updated content text in the window.")
 
     def apply_filter(self):
