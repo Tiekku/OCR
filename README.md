@@ -15,4 +15,6 @@ The cardName txt file is needed to combine competitor name to the card. If name 
 The last read item will be added/moved on the top of tableview for easier to found out.
 The display to show the counters for running competitors should be big enough, example TV. The text size can be change by pressin Alt + or Alt -
 
+## License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
